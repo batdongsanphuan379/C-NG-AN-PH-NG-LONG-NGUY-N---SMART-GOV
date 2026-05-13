@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function isAdmin() { 
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) || 
+        (request.auth.token.email == 'batdongsanphuan379@gmail.com' && request.auth.token.email_verified == true)
+      ); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    
+    // Procedure Validation
+    function isValidProcedure(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.videoUrl is string &&
+             data.pdfUrl is string &&
+             (!('category' in data) || data.category is string) &&
+             (!('description' in data) || data.description is string) &&
+             (!('zaloGroupUrl' in data) || data.zaloGroupUrl is string) &&
+             data.keys().hasAll(['name', 'videoUrl', 'pdfUrl']);
+    }
+
+    // Appointment Validation - Relaxed for partial updates/legacy records
+    function isValidAppointment(data) {
+      return data.citizenName is string && data.citizenName.size() > 0 &&
+             data.phone is string && data.phone.size() >= 10 &&
+             data.citizenId is string &&
+             data.procedureId is string &&
+             data.appointmentDate is string &&
+             data.timeSlot is string &&
+             data.status in ['pending', 'confirmed', 'cancelled', 'completed'] &&
+             data.recordCode is string;
+    }
+
+    // --- Collections ---
+
+    // 1. Procedures (Read-only for citizens, Admin can write/delete)
+    match /procedures/{procedureId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidProcedure(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // 2. Appointments
+    match /appointments/{appointmentId} {
+      // Allow list if admin OR if specifically querying with a recordCode
+      allow list: if isAdmin() || (resource.data.recordCode != null);
+      allow get: if isAdmin() || (resource.data.recordCode != null);
+
+      allow create: if (
+        isValidId(appointmentId) &&
+        isValidAppointment(incoming()) &&
+        incoming().status == 'pending' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time
+      );
+
+      allow update: if isAdmin() && (
+        // Action: Update Status (Standard admin workflow)
+        (incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && 
+         incoming().updatedAt == request.time) ||
+        // Action: Full Update
+        isValidAppointment(incoming())
+      );
+      
+      allow delete: if isAdmin();
+    }
+
+    // 3. Slots
+    match /slots/{slotId} {
+      allow read: if true;
+      allow create: if true; // Allow initial slot creation
+      allow update: if (
+        // Allow incrementing currentCount if it's within capacity
+        incoming().currentCount <= existing().maxCapacity &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['currentCount'])
+      ) || isAdmin();
+    }
+
+    // 4. Admins
+    match /admins/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // 5. Settings
+    match /settings/{settingsId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

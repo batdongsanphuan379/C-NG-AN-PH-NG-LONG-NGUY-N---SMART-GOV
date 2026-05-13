@@ -1,0 +1,12 @@
+{
+  "name": "CÔNG AN PHƯỜNG LONG NGUYÊN - SMART GOV",
+  "description": "Nền tảng cải cách thủ tục hành chính qua mã QR, hỗ trợ đặt lịch hẹn, xem hướng dẫn và tra cứu tiến độ hồ sơ trực tuyến.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "Cơ sở dữ liệu thời gian thực",
+    "Thông báo Zalo OA",
+    "Quản lý lịch hẹn thông minh"
+  ]
+}

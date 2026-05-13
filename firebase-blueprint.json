@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "Procedure": {
+      "title": "Administrative Procedure",
+      "description": "Details of an administrative procedure, including instructions and forms.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the procedure" },
+        "videoUrl": { "type": "string", "description": "YouTube or Drive video URL" },
+        "pdfUrl": { "type": "string", "description": "Link to PDF form template" },
+        "description": { "type": "string", "description": "Brief description" },
+        "zaloGroupUrl": { "type": "string", "description": "URL of the Zalo support group for this procedure" }
+      },
+      "required": ["name", "videoUrl", "pdfUrl"]
+    },
+    "Appointment": {
+      "title": "Citizen Appointment",
+      "description": "Booking details for a specific procedure and time slot.",
+      "type": "object",
+      "properties": {
+        "citizenName": { "type": "string" },
+        "phone": { "type": "string" },
+        "citizenId": { "type": "string", "description": "CCCD/ID Number" },
+        "procedureId": { "type": "string" },
+        "appointmentDate": { "type": "string", "format": "date" },
+        "timeSlot": { "type": "string", "description": "e.g., 08:00-09:00" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled", "completed"] },
+        "recordCode": { "type": "string", "description": "Tracking code sent to citizen" },
+        "processedBy": { "type": "string", "description": "Email of the officer who processed this record" },
+        "processedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["citizenName", "phone", "procedureId", "appointmentDate", "timeSlot", "status"]
+    },
+    "SlotConfig": {
+      "title": "Time Slot Capacity",
+      "description": "Configures how many people can book per slot.",
+      "type": "object",
+      "properties": {
+        "maxCapacity": { "type": "number" },
+        "currentCount": { "type": "number" }
+      }
+    },
+    "AdminMember": {
+      "title": "Admin Member",
+      "description": "Police officer with administrative access.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string" },
+        "addedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "AppSettings": {
+      "title": "Application Settings",
+      "description": "Global configuration for the application.",
+      "type": "object",
+      "properties": {
+        "logoUrl": { "type": "string", "description": "URL of the application logo" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/procedures/{procedureId}": {
+      "schema": "Procedure",
+      "description": "Catalog of available procedures."
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "Individual booking records."
+    },
+    "/slots/{slotId}": {
+      "schema": "SlotConfig",
+      "description": "Capacity tracking per date and time slot (slotId format: YYYY-MM-DD_HH-MM)."
+    },
+    "/admins/{uid}": {
+      "schema": "AdminMember",
+      "description": "List of users with admin privileges."
+    },
+    "/settings/{settingsId}": {
+      "schema": "AppSettings",
+      "description": "Global application settings (use 'global' as ID)."
+    }
+  }
+}

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      // High-priority fix for restricted window.fetch property
+      (function() {
+        try {
+          var target = typeof window !== 'undefined' ? window : globalThis;
+          if (!target) return;
+          
+          var currentFetch = target.fetch;
+          var desc = Object.getOwnPropertyDescriptor(target, 'fetch');
+          
+          if (desc && desc.configurable === false) {
+             // If not configurable, we can't do defineProperty
+             // But we can try to shadow it or ignore if it's already there
+             return;
+          }
+
+          Object.defineProperty(target, 'fetch', {
+            get: function() { return currentFetch; },
+            set: function(v) { currentFetch = v; },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          // Fallback if defineProperty fails
+          console.warn('Fetch setter polyfill failed:', e);
+        }
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CÔNG AN PHƯỜNG LONG NGUYÊN - SMART GOV</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
