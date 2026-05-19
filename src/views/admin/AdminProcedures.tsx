@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
-import { db, OperationType, handleFirestoreError } from '../../firebase';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { db, storage, OperationType, handleFirestoreError } from '../../firebase';
 import { Procedure } from '../../types';
 import { 
   Plus, 
@@ -12,7 +13,10 @@ import {
   Save, 
   X,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Upload,
+  Minus,
+  Link
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -22,6 +26,8 @@ export default function AdminProcedures() {
   const [showModal, setShowModal] = useState(false);
   const [editingProc, setEditingProc] = useState<Procedure | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -30,7 +36,8 @@ export default function AdminProcedures() {
     videoUrl: '',
     pdfUrl: '',
     description: '',
-    zaloGroupUrl: ''
+    zaloGroupUrl: '',
+    additionalLinks: [] as { label: string, url: string }[]
   });
 
   const fetchProcedures = async () => {
@@ -56,14 +63,23 @@ export default function AdminProcedures() {
       setFormData({
         name: proc.name,
         category: proc.category || '',
-        videoUrl: proc.videoUrl,
-        pdfUrl: proc.pdfUrl,
+        videoUrl: proc.videoUrl || '',
+        pdfUrl: proc.pdfUrl || '',
         description: proc.description,
-        zaloGroupUrl: proc.zaloGroupUrl || ''
+        zaloGroupUrl: proc.zaloGroupUrl || '',
+        additionalLinks: proc.additionalLinks || []
       });
     } else {
       setEditingProc(null);
-      setFormData({ name: '', category: '', videoUrl: '', pdfUrl: '', description: '', zaloGroupUrl: '' });
+      setFormData({ 
+        name: '', 
+        category: '', 
+        videoUrl: '', 
+        pdfUrl: '', 
+        description: '', 
+        zaloGroupUrl: '', 
+        additionalLinks: [] 
+      });
     }
     setShowModal(true);
   };
@@ -87,6 +103,26 @@ export default function AdminProcedures() {
     }
   };
 
+  const addLink = () => {
+    setFormData(prev => ({
+      ...prev,
+      additionalLinks: [...prev.additionalLinks, { label: '', url: '' }]
+    }));
+  };
+
+  const updateLink = (index: number, field: 'label' | 'url', value: string) => {
+    const newLinks = [...formData.additionalLinks];
+    newLinks[index][field] = value;
+    setFormData(prev => ({ ...prev, additionalLinks: newLinks }));
+  };
+
+  const removeLink = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      additionalLinks: prev.additionalLinks.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleDelete = async (id: string) => {
     setIsDeleting(id);
     try {
@@ -97,6 +133,59 @@ export default function AdminProcedures() {
       handleFirestoreError(err, OperationType.DELETE, `procedures/${id}`);
     } finally {
       setIsDeleting(null);
+    }
+  };
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      console.log("No file selected");
+      return;
+    }
+
+    console.log("File selected:", file.name, "Size:", file.size);
+
+    // Validate size (e.g., max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      alert("Dung lượng video quá lớn. Vui lòng chọn file dưới 50MB.");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const storagePath = `procedure-videos/${Date.now()}_${file.name}`;
+      console.log("Starting upload to path:", storagePath);
+      const storageRef = ref(storage, storagePath);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(Math.round(progress));
+          console.log("Upload progress:", progress, "%");
+        },
+        (error) => {
+          console.error("Upload error details:", error);
+          alert(`Lỗi khi tải video lên: ${error.message || 'Lỗi không xác định'}. Vui lòng kiểm tra quyền truy cập Storage và dung lượng file.`);
+          setIsUploading(false);
+          setUploadProgress(null);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          console.log("Upload complete! Download URL:", downloadURL);
+          setFormData(prev => ({ ...prev, videoUrl: downloadURL }));
+          setIsUploading(false);
+          setUploadProgress(null);
+          alert("Tải video lên thành công!");
+        }
+      );
+    } catch (err) {
+      console.error("Caught error during upload initiation:", err);
+      setIsUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -145,29 +234,29 @@ export default function AdminProcedures() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
-         <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100">
+         <div className="w-full md:w-auto">
             <h2 className="text-xl font-bold text-gray-800">Danh mục Thủ tục</h2>
             <div className="flex flex-wrap items-center gap-2 mt-1">
-               <p className="text-sm text-gray-500">Quản lý hướng dẫn và biểu mẫu cho người dân</p>
+               <p className="text-sm text-gray-500">Quản lý hướng dẫn và biểu mẫu</p>
                <button 
                  onClick={seedResidenceProcedures}
                  disabled={isSeeding}
                  className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-bold hover:bg-amber-100 transition-colors border border-amber-100 disabled:opacity-50"
                >
-                 {isSeeding ? 'Đang khởi tạo...' : '+ Khởi tạo 6 mục cư trú'}
+                 {isSeeding ? '...' : '+ Khởi tạo cư trú'}
                </button>
             </div>
          </div>
          <button 
            onClick={() => openModal()}
-           className="flex items-center gap-3 bg-[#1A5FB4] text-white px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:bg-blue-600 transition-all active:scale-95"
+           className="w-full md:w-auto flex items-center justify-center gap-3 bg-[#1A5FB4] text-white px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-500/30 hover:bg-blue-600 transition-all active:scale-95"
          >
-            <Plus size={20} /> Thêm thủ tục mới
+            <Plus size={20} /> Thêm thủ tục
          </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
         <AnimatePresence>
           {procedures.map((proc) => (
             <motion.div 
@@ -175,11 +264,11 @@ export default function AdminProcedures() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col group hover:shadow-md transition-shadow"
+              className="bg-white p-5 md:p-6 rounded-3xl md:rounded-[2rem] shadow-sm border border-gray-100 flex flex-col group hover:shadow-md transition-shadow"
             >
-               <div className="flex justify-between items-start mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-[#1A5FB4]">
-                     <FileText size={24} />
+               <div className="flex justify-between items-start mb-3 md:mb-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-blue-50 flex items-center justify-center text-[#1A5FB4]">
+                     <FileText size={20} className="md:w-6 md:h-6" />
                   </div>
                   <div className="flex gap-1">
                      <button 
@@ -287,26 +376,99 @@ export default function AdminProcedures() {
 
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">URL Video (YouTube)</label>
-                        <input 
-                          required
-                          type="url" 
-                          placeholder="https://..."
-                          className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium"
-                          value={formData.videoUrl}
-                          onChange={e => setFormData({...formData, videoUrl: e.target.value})}
-                        />
+                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Video hướng dẫn (Không bắt buộc)</label>
+                        <div className="flex flex-col gap-3">
+                          <input 
+                            type="url" 
+                            placeholder="URL Video (YouTube hoặc Link trực tiếp)"
+                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium"
+                            value={formData.videoUrl}
+                            onChange={e => setFormData({...formData, videoUrl: e.target.value})}
+                          />
+                          <div className="relative">
+                            <input 
+                              type="file" 
+                              accept="video/*" 
+                              onChange={handleVideoUpload}
+                              className="hidden" 
+                              id="video-upload"
+                              disabled={isUploading}
+                            />
+                            <label 
+                              htmlFor="video-upload"
+                              className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed transition-all cursor-pointer ${
+                                isUploading 
+                                ? 'bg-gray-50 border-gray-200 text-gray-400' 
+                                : 'bg-blue-50 border-blue-200 text-[#1A5FB4] hover:bg-blue-100'
+                              }`}
+                            >
+                              {isUploading ? (
+                                <>
+                                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                  <span className="text-xs font-bold uppercase tracking-wider">Đang tải lên {uploadProgress}%</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Upload size={16} />
+                                  <span className="text-xs font-bold uppercase tracking-wider">Tải lên video trực tiếp</span>
+                                </>
+                              )}
+                            </label>
+                          </div>
+                        </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">URL File PDF</label>
+                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">URL File PDF (Không bắt buộc)</label>
                         <input 
-                          required
                           type="url" 
                           placeholder="https://..."
                           className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium"
                           value={formData.pdfUrl}
                           onChange={e => setFormData({...formData, pdfUrl: e.target.value})}
                         />
+                      </div>
+                   </div>
+
+                   <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Các liên kết bổ sung</label>
+                        <button 
+                          type="button" 
+                          onClick={addLink}
+                          className="text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 px-3 py-1 rounded-full hover:bg-blue-100 transition-all"
+                        >
+                          + Thêm liên kết
+                        </button>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {formData.additionalLinks.map((link, idx) => (
+                          <div key={idx} className="flex gap-3 items-start">
+                            <div className="flex-1 grid grid-cols-2 gap-3">
+                              <input 
+                                type="text"
+                                placeholder="Tên (VD: Biểu mẫu 01)"
+                                className="bg-gray-50 border border-gray-100 rounded-xl py-3 px-4 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={link.label}
+                                onChange={e => updateLink(idx, 'label', e.target.value)}
+                              />
+                              <input 
+                                type="url"
+                                placeholder="Link liên kết"
+                                className="bg-gray-50 border border-gray-100 rounded-xl py-3 px-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={link.url}
+                                onChange={e => updateLink(idx, 'url', e.target.value)}
+                              />
+                            </div>
+                            <button 
+                              type="button"
+                              onClick={() => removeLink(idx)}
+                              className="p-3 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-xl"
+                            >
+                              <Minus size={16} />
+                            </button>
+                          </div>
+                        ))}
                       </div>
                    </div>
 

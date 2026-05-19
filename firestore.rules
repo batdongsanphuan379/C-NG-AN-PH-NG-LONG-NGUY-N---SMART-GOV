@@ -23,12 +23,13 @@ service cloud.firestore {
     // Procedure Validation
     function isValidProcedure(data) {
       return data.name is string && data.name.size() > 0 &&
-             data.videoUrl is string &&
-             data.pdfUrl is string &&
+             (!('videoUrl' in data) || data.videoUrl is string) &&
+             (!('pdfUrl' in data) || data.pdfUrl is string) &&
              (!('category' in data) || data.category is string) &&
              (!('description' in data) || data.description is string) &&
              (!('zaloGroupUrl' in data) || data.zaloGroupUrl is string) &&
-             data.keys().hasAll(['name', 'videoUrl', 'pdfUrl']);
+             (!('additionalLinks' in data) || data.additionalLinks is list) &&
+             data.keys().hasAll(['name']);
     }
 
     // Appointment Validation - Relaxed for partial updates/legacy records

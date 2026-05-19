@@ -65,77 +65,75 @@ export default function AdminManagement() {
   };
 
   return (
-    <div className="max-w-4xl space-y-8 animate-in fade-in duration-500">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+    <div className="max-w-4xl space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-20 md:pb-0">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100">
         <div>
-          <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
-            <ShieldCheck className="text-[#1A5FB4]" size={32} />
-            Quản lý Quyền Cán bộ
+          <h2 className="text-xl md:text-2xl font-black text-gray-900 flex items-center gap-3">
+            <ShieldCheck className="text-[#1A5FB4]" size={28} className="md:w-8 md:h-8" />
+            Bảo mật Cán bộ
           </h2>
-          <p className="text-gray-500 mt-1">Cấp quyền truy cập hệ thống cho cán bộ chiến sĩ.</p>
+          <p className="text-xs md:text-sm text-gray-500 mt-1">Quản lý quyền truy cập hệ thống.</p>
         </div>
       </header>
 
       {/* Info Card */}
-      <div className="bg-blue-50 border border-blue-100 p-6 rounded-3xl flex gap-4">
-        <Info className="text-blue-500 shrink-0" size={24} />
-        <div className="text-sm text-blue-800 space-y-2">
-          <p className="font-bold">Làm sao để lấy UID của cán bộ?</p>
-          <p>
-            1. Cán bộ dùng tài khoản Google đăng nhập vào hệ thống.
-            <br />
-            2. Nếu chưa có quyền, hệ thống sẽ báo "Truy cập bị từ chối" nhưng sẽ hiển thị <strong>UID</strong> của cán bộ (hoặc bạn có thể xem trong Firebase Console).
-            <br />
-            3. Copy UID đó và dán vào ô bên dưới để cấp quyền.
-          </p>
+      <div className="bg-blue-50 border border-blue-100 p-5 md:p-6 rounded-3xl flex gap-3 md:gap-4">
+        <Info className="text-blue-500 shrink-0" size={20} className="md:w-6 md:h-6" />
+        <div className="text-[11px] md:text-sm text-blue-800 space-y-1.5 md:space-y-2">
+          <p className="font-bold">Cách lấy UID để cấp quyền:</p>
+          <div className="space-y-1">
+            <p>1. Cán bộ đăng nhập vào "Khu vực cán bộ".</p>
+            <p>2. Copy mã UID hiển thị trên màn hình lỗi (Nếu chưa có quyền).</p>
+            <p>3. Dán UID vào ô dưới đây để xác thực.</p>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         {/* Form Section */}
-        <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 h-fit">
-          <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
-            <UserPlus size={20} className="text-[#1A5FB4]" />
+        <div className="bg-white p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100 h-fit">
+          <h3 className="text-base md:text-lg font-bold text-gray-800 mb-5 md:mb-6 flex items-center gap-2">
+            <UserPlus size={18} className="text-[#1A5FB4] md:w-5 md:h-5" />
             Cấp quyền mới
           </h3>
           <form onSubmit={handleAddAdmin} className="space-y-4">
             <div>
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 pl-1">
-                UID Cán bộ (Bắt buộc)
+              <label className="block text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 md:mb-2 pl-1">
+                UID Cán bộ
               </label>
               <div className="relative">
-                <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input 
                   type="text"
                   required
-                  placeholder="Dán UID vào đây..."
+                  placeholder="UID..."
                   value={newUid}
                   onChange={(e) => setNewUid(e.target.value)}
-                  className="w-full bg-gray-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[#1A5FB4] transition-all"
+                  className="w-full bg-gray-50 border-none rounded-2xl py-3.5 md:py-4 pl-11 md:pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[#1A5FB4] transition-all"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 pl-1">
-                Email Cán bộ (Tùy chọn)
+              <label className="block text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 md:mb-2 pl-1">
+                Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input 
                   type="email"
-                  placeholder="email@longnguyen.gov.vn"
+                  placeholder="name@gmail.com"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
-                  className="w-full bg-gray-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[#1A5FB4] transition-all"
+                  className="w-full bg-gray-50 border-none rounded-2xl py-3.5 md:py-4 pl-11 md:pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-[#1A5FB4] transition-all"
                 />
               </div>
             </div>
             <button 
               type="submit"
               disabled={isAdding || !newUid}
-              className="w-full bg-[#1A5FB4] text-white py-4 rounded-2xl font-bold uppercase tracking-widest text-sm shadow-lg shadow-blue-500/20 hover:bg-[#144A8E] transition-all disabled:opacity-50"
+              className="w-full bg-[#1A5FB4] text-white py-4 rounded-2xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-blue-500/20 hover:bg-[#144A8E] transition-all disabled:opacity-50"
             >
-              {isAdding ? 'Đang cấp quyền...' : 'Cấp quyền truy cập'}
+              {isAdding ? 'Đang cấp quyền...' : 'Cấp quyền'}
             </button>
           </form>
         </div>

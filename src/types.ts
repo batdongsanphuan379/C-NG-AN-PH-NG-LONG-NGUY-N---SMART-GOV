@@ -1,13 +1,19 @@
 export type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 
+export interface ExternalLink {
+  label: string;
+  url: string;
+}
+
 export interface Procedure {
   id: string;
   name: string;
   category?: string;
-  videoUrl: string;
-  pdfUrl: string;
+  videoUrl?: string;
+  pdfUrl?: string;
   description: string;
   zaloGroupUrl?: string;
+  additionalLinks?: ExternalLink[];
 }
 
 export interface Appointment {

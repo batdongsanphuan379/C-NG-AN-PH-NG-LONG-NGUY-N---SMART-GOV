@@ -96,50 +96,51 @@ export default function AdminAppointments() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 md:p-6 rounded-3xl md:rounded-[2rem] shadow-sm border border-gray-100">
         <div className="relative flex-1 w-full">
-           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
            <input 
              type="text" 
-             placeholder="Tìm theo tên, mã hồ sơ, số điện thoại..." 
-             className="w-full bg-gray-50 border-none rounded-2xl py-4 pl-12 pr-4 text-sm font-medium focus:ring-2 focus:ring-blue-500 transition-all font-sans"
+             placeholder="Tìm tên, mã, SĐT..." 
+             className="w-full bg-gray-50 border-none rounded-2xl py-3.5 md:py-4 pl-11 pr-4 text-sm font-medium focus:ring-2 focus:ring-blue-500 transition-all font-sans"
              value={searchTerm}
              onChange={e => setSearchTerm(e.target.value)}
            />
         </div>
-        <div className="flex gap-3 w-full md:w-auto">
+        <div className="flex gap-2 md:gap-3 w-full md:w-auto">
            <div className="relative flex-1 md:flex-none">
              <select 
-               className="w-full bg-gray-50 border-none rounded-xl py-4 pl-4 pr-10 text-sm font-bold text-gray-600 appearance-none focus:ring-2 focus:ring-blue-500"
+               className="w-full bg-gray-50 border-none rounded-xl py-3.5 md:py-4 pl-4 pr-10 text-[13px] md:text-sm font-bold text-gray-600 appearance-none focus:ring-2 focus:ring-blue-500"
                value={statusFilter}
                onChange={e => setStatusFilter(e.target.value)}
              >
-               <option value="all">Tất cả trạng thái</option>
+               <option value="all">Tất cả</option>
                <option value="pending">Đang chờ</option>
                <option value="confirmed">Xác nhận</option>
                <option value="completed">Hoàn thành</option>
                <option value="cancelled">Đã hủy</option>
              </select>
-             <Filter className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+             <Filter className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
            </div>
            <button 
               onClick={() => setIsExportModalOpen(true)}
-              className="p-4 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-colors flex items-center gap-2"
+              className="p-3.5 md:p-4 bg-green-50 text-green-600 rounded-xl hover:bg-green-100 transition-colors flex items-center gap-2"
               title="Xuất Excel"
             >
-              <FileSpreadsheet size={20} />
-              <span className="hidden lg:inline text-xs font-bold uppercase tracking-widest">Xuất Excel</span>
+              <FileSpreadsheet size={18} />
+              <span className="hidden lg:inline text-xs font-bold uppercase tracking-widest">Xuất</span>
             </button>
             <button 
-              className="p-4 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors cursor-default"
+              className="p-3.5 md:p-4 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors cursor-default"
             >
-              <RefreshCcw size={20} className={loading ? 'animate-spin' : ''} />
+              <RefreshCcw size={18} className={loading ? 'animate-spin' : ''} />
             </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-transparent md:bg-white md:rounded-[2.5rem] md:shadow-sm md:border md:border-gray-100 overflow-hidden">
+        {/* Table View (Desktop) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
@@ -239,6 +240,83 @@ export default function AdminAppointments() {
                   <Search size={32} />
                </div>
                <p className="font-bold text-gray-400">Không tìm thấy dữ liệu phù hợp</p>
+            </div>
+          )}
+        </div>
+
+        {/* Card View (Mobile) */}
+        <div className="md:hidden space-y-4">
+          <AnimatePresence mode="popLayout">
+            {filtered.map((item) => (
+              <motion.div 
+                key={item.id}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm space-y-4"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#1A5FB4] font-black">
+                      {item.citizenName[0]}
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900 text-sm">{item.citizenName}</p>
+                      <span className="text-[10px] font-bold text-[#1A5FB4] uppercase">{item.recordCode}</span>
+                    </div>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-black border-2 ${getStatusBadge(item.status)}`}>
+                    {item.status.toUpperCase()}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 py-3 border-y border-gray-50">
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Thời gian</p>
+                    <p className="text-xs font-bold text-gray-700">{item.appointmentDate}</p>
+                    <p className="text-[10px] font-medium text-gray-500">{item.timeSlot}</p>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Liên hệ</p>
+                    <p className="text-xs font-bold text-gray-700">{item.phone}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  {item.status === 'pending' && (
+                    <>
+                      <button 
+                        onClick={() => handleStatusChange(item.id, 'confirmed', item.phone, item.recordCode)}
+                        disabled={updatingId === item.id}
+                        className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider"
+                      >
+                         Xác nhận
+                      </button>
+                      <button 
+                        onClick={() => handleStatusChange(item.id, 'cancelled', item.phone, item.recordCode)}
+                        disabled={updatingId === item.id}
+                        className="flex-1 py-3 bg-red-50 text-red-600 rounded-xl font-bold text-xs uppercase tracking-wider"
+                      >
+                         Từ chối
+                      </button>
+                    </>
+                  )}
+                  {item.status === 'confirmed' && (
+                    <button 
+                      onClick={() => handleStatusChange(item.id, 'completed', item.phone, item.recordCode)}
+                      disabled={updatingId === item.id}
+                      className="w-full py-3 bg-green-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                    >
+                       <CheckCircle size={14} /> Hoàn thành
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          {filtered.length === 0 && !loading && (
+            <div className="py-12 bg-white rounded-3xl border border-gray-100 text-center">
+              <p className="text-sm font-bold text-gray-400">Không có dữ liệu</p>
             </div>
           )}
         </div>

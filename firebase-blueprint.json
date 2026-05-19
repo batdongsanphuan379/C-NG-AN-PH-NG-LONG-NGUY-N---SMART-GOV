@@ -6,12 +6,22 @@
       "type": "object",
       "properties": {
         "name": { "type": "string", "description": "Name of the procedure" },
-        "videoUrl": { "type": "string", "description": "YouTube or Drive video URL" },
-        "pdfUrl": { "type": "string", "description": "Link to PDF form template" },
+        "videoUrl": { "type": "string", "description": "YouTube or Drive video URL (Optional)" },
+        "pdfUrl": { "type": "string", "description": "Link to PDF form template (Optional)" },
         "description": { "type": "string", "description": "Brief description" },
-        "zaloGroupUrl": { "type": "string", "description": "URL of the Zalo support group for this procedure" }
+        "zaloGroupUrl": { "type": "string", "description": "URL of the Zalo support group for this procedure" },
+        "additionalLinks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "url": { "type": "string" }
+            }
+          }
+        }
       },
-      "required": ["name", "videoUrl", "pdfUrl"]
+      "required": ["name"]
     },
     "Appointment": {
       "title": "Citizen Appointment",

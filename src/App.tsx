@@ -24,7 +24,14 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, db } from './firebase';
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
+  GoogleAuthProvider, 
+  signOut 
+} from 'firebase/auth';
 import { collection, onSnapshot, getDocs, doc, getDoc } from 'firebase/firestore';
 
 // Views
@@ -46,6 +53,11 @@ export default function App() {
   });
 
   useEffect(() => {
+    // Check for redirect result
+    getRedirectResult(auth).catch(err => {
+      console.error("Redirect auth error:", err);
+    });
+
     const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (snap) => {
       if (snap.exists()) {
         setSettings(snap.data());
@@ -296,25 +308,48 @@ function AdminLayout({ children, user, settings }: { children: React.ReactNode, 
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shrink-0">
-          <h2 className="text-xl font-bold text-gray-800">
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 shrink-0">
+          <h2 className="text-lg md:text-xl font-bold text-gray-800">
             {menuItems.find(m => m.path === location.pathname)?.label || 'Quản trị'}
           </h2>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <button className="p-2 text-gray-400 hover:text-[#1A5FB4] transition-colors relative">
               <Bell size={20} />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
-            <div className="h-8 w-[1px] bg-gray-200"></div>
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
+            <div className="h-8 w-[1px] bg-gray-200 hidden sm:block"></div>
+            <div className="hidden sm:flex items-center gap-2 text-sm font-medium text-gray-600">
               <Clock size={16} />
               {new Date().toLocaleDateString('vi-VN')}
             </div>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
           {children}
         </div>
+
+        {/* Mobile Admin Bottom Nav */}
+        <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] bg-[#141414] text-white rounded-[2rem] px-6 py-3 flex justify-between items-center z-50 shadow-2xl border border-white/5">
+          {menuItems.map((item) => (
+            <Link 
+              key={item.path} 
+              to={item.path} 
+              className={`flex flex-col items-center gap-1 transition-all ${
+                location.pathname === item.path ? 'text-blue-400 scale-110' : 'text-gray-500'
+              }`}
+            >
+              <item.icon size={18} />
+              <span className="text-[8px] font-black uppercase tracking-wider">{item.label}</span>
+            </Link>
+          ))}
+          <button 
+            onClick={handleSignOut}
+            className="flex flex-col items-center gap-1 text-red-400"
+          >
+            <LogOut size={18} />
+            <span className="text-[8px] font-black uppercase tracking-wider">Thoát</span>
+          </button>
+        </nav>
       </main>
     </div>
   );
@@ -322,15 +357,40 @@ function AdminLayout({ children, user, settings }: { children: React.ReactNode, 
 
 function AdminLogin({ settings }: { settings: any }) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
-  const handleLogin = async () => {
+  const handleLoginPopup = async () => {
     setLoading(true);
+    setError(null);
     try {
       const provider = new GoogleAuthProvider();
+      // Add custom parameters to force account selection
+      provider.setCustomParameters({ prompt: 'select_account' });
       await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error("Popup login failed:", err);
+      if (err.code === 'auth/popup-blocked') {
+        setError("Cửa sổ đăng nhập bị chặn. Vui lòng sử dụng Đăng nhập Trực tiếp.");
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        // User closed the popup, don't show error
+      } else {
+        setError("Lỗi đăng nhập: " + (err.message || "Không xác định"));
+      }
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLoginRedirect = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithRedirect(auth, provider);
+    } catch (err: any) {
+      console.error("Redirect login failed:", err);
+      setError("Lỗi đăng nhập: " + (err.message || "Không xác định"));
       setLoading(false);
     }
   };
@@ -353,23 +413,48 @@ function AdminLogin({ settings }: { settings: any }) {
           />
         </div>
         <h1 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">Khu vực Cán bộ</h1>
-        <p className="text-gray-500 mb-12 leading-relaxed text-sm font-medium">
+        <p className="text-gray-500 mb-8 leading-relaxed text-sm font-medium">
           Đăng nhập bằng tài khoản nội bộ để quản lý hệ thống.
         </p>
-        <button 
-          onClick={handleLogin}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-4 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white font-black uppercase tracking-widest py-5 px-8 rounded-3xl transition-all shadow-xl hover:-translate-y-1 active:scale-95"
+
+        {error && (
+          <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-xs font-bold flex items-center gap-3">
+             <ShieldCheck size={20} />
+             <span>{error}</span>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <button 
+            onClick={handleLoginPopup}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-4 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white font-black uppercase tracking-widest py-5 px-8 rounded-3xl transition-all shadow-xl hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+          >
+            {loading ? (
+              <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              <>
+                 <ShieldCheck size={22} className="text-blue-400" />
+                 Đăng nhập (Cửa sổ)
+              </>
+            )}
+          </button>
+
+          <button 
+            onClick={handleLoginRedirect}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-4 bg-white border-2 border-gray-100 hover:border-blue-500 text-gray-700 font-black uppercase tracking-widest py-5 px-8 rounded-3xl transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+          >
+            Đăng nhập Trực tiếp
+          </button>
+        </div>
+
+        <Link 
+          to="/"
+          className="mt-8 inline-block text-xs font-black uppercase tracking-widest text-[#1A5FB4] hover:opacity-70 transition-all"
         >
-          {loading ? (
-            <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-          ) : (
-            <>
-               <ShieldCheck size={22} className="text-blue-400" />
-               Truy cập Hệ thống
-            </>
-          )}
-        </button>
+          Trở về Trang chủ
+        </Link>
       </motion.div>
     </div>
   );

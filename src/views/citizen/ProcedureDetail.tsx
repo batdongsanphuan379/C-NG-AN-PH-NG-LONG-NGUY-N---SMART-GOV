@@ -182,38 +182,61 @@ export default function ProcedureDetail() {
         <h2 className="text-3xl font-display font-bold text-gray-900 leading-tight tracking-tight">{procedure.name}</h2>
         
         {/* Video Player */}
-        <div className="aspect-video bg-gray-900 rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
-           {procedure.videoUrl.includes('youtube.com') || procedure.videoUrl.includes('youtu.be') ? (
-             <iframe 
-               width="100%" 
-               height="100%" 
-               src={`https://www.youtube.com/embed/${procedure.videoUrl.split('v=')[1] || procedure.videoUrl.split('/').pop()}`}
-               title="Video hướng dẫn"
-               frameBorder="0"
-               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-               allowFullScreen
-               className="relative z-0"
-             ></iframe>
-           ) : (
-             <div className="flex flex-col items-center justify-center h-full text-white/20 gap-4">
-               <Video size={64} strokeWidth={1.5} />
-               <p className="text-sm font-black uppercase tracking-widest">Video Player</p>
-               <a href={procedure.videoUrl} target="_blank" rel="noreferrer" className="px-6 py-3 bg-white/10 rounded-2xl text-white text-xs font-bold hover:bg-white/20 transition-all">Mở xem hướng dẫn</a>
-             </div>
-           )}
-        </div>
+        {procedure.videoUrl ? (
+          <div className="aspect-video bg-gray-900 rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
+            {procedure.videoUrl.includes('youtube.com') || procedure.videoUrl.includes('youtu.be') ? (
+              <iframe 
+                width="100%" 
+                height="100%" 
+                src={`https://www.youtube.com/embed/${procedure.videoUrl.split('v=')[1] || procedure.videoUrl.split('/').pop()}`}
+                title="Video hướng dẫn"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="relative z-0"
+              ></iframe>
+            ) : procedure.videoUrl.match(/\.(mp4|webm|ogg)$/) || procedure.videoUrl.includes('firebasestorage.googleapis.com') ? (
+              <video 
+                src={procedure.videoUrl} 
+                controls 
+                className="w-full h-full object-cover"
+                poster={procedure.zaloGroupUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${procedure.zaloGroupUrl}` : undefined}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-white/20 gap-4">
+                <Video size={64} strokeWidth={1.5} />
+                <p className="text-sm font-black uppercase tracking-widest">Video Player</p>
+                <a href={procedure.videoUrl} target="_blank" rel="noreferrer" className="px-6 py-3 bg-white/10 rounded-2xl text-white text-xs font-bold hover:bg-white/20 transition-all">Mở xem hướng dẫn</a>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="aspect-video bg-blue-50 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 text-blue-200 border-2 border-dashed border-blue-100">
+             <Video size={64} strokeWidth={1} />
+             <p className="text-xs font-black uppercase tracking-[0.2em]">Video hướng dẫn đang được cập nhật</p>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-5">
-          <a 
-            href={procedure.pdfUrl} 
-            download 
-            className="flex flex-col items-center gap-4 bg-white p-7 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-center group"
-          >
-            <div className="p-4 bg-blue-50 text-[#1A5FB4] rounded-2xl group-hover:bg-[#1A5FB4] group-hover:text-white transition-all">
-              <FileDown size={24} strokeWidth={2.5} />
+          {procedure.pdfUrl ? (
+            <a 
+              href={procedure.pdfUrl} 
+              download 
+              className="flex flex-col items-center gap-4 bg-white p-7 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-center group"
+            >
+              <div className="p-4 bg-blue-50 text-[#1A5FB4] rounded-2xl group-hover:bg-[#1A5FB4] group-hover:text-white transition-all">
+                <FileDown size={24} strokeWidth={2.5} />
+              </div>
+              <span className="text-[11px] font-black text-gray-500 uppercase tracking-widest leading-normal">Biểu mẫu<br/>PDF</span>
+            </a>
+          ) : (
+            <div className="flex flex-col items-center gap-4 bg-gray-50 p-7 rounded-[2.5rem] border border-gray-100 text-center opacity-60">
+              <div className="p-4 bg-gray-200 text-gray-400 rounded-2xl">
+                <FileDown size={24} strokeWidth={2.5} />
+              </div>
+              <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest leading-normal">Không có<br/>Mẫu PDF</span>
             </div>
-            <span className="text-[11px] font-black text-gray-500 uppercase tracking-widest leading-normal">Biểu mẫu<br/>PDF</span>
-          </a>
+          )}
           <button 
              onClick={() => setShowModal(true)}
              className="flex flex-col items-center gap-4 bg-[#1A1A1A] p-7 rounded-[2.5rem] shadow-xl hover:shadow-[#1A5FB4]/20 hover:-translate-y-1 transition-all text-center group"
@@ -224,6 +247,30 @@ export default function ProcedureDetail() {
             <span className="text-[11px] font-black text-white uppercase tracking-widest leading-normal">Đặt lịch<br/>Hẹn gắp</span>
           </button>
         </div>
+
+        {procedure.additionalLinks && procedure.additionalLinks.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {procedure.additionalLinks.map((link, idx) => (
+              <a 
+                key={idx}
+                href={link.url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-between p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all">
+                    <LinkIcon size={18} />
+                  </div>
+                  <span className="text-sm font-bold text-gray-700">{link.label}</span>
+                </div>
+                <div className="text-gray-300 group-hover:text-blue-500 transition-colors">
+                  <ArrowLeft size={16} className="rotate-180" />
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
 
         {procedure.zaloGroupUrl && (
           <div className="bg-[#E7F3FF] rounded-[2.5rem] p-8 border border-blue-100 flex flex-col items-center text-center gap-6">
