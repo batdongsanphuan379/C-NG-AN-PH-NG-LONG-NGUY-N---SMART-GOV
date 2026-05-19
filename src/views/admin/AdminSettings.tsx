@@ -128,7 +128,7 @@ export default function AdminSettings() {
       <div className="bg-white rounded-3xl md:rounded-[2.5rem] p-5 md:p-10 shadow-sm border border-gray-100">
         <div className="flex items-center gap-4 mb-6 md:mb-8">
           <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-xl md:rounded-2xl flex items-center justify-center">
-            <ImageIcon className="text-blue-600" size={20} className="md:w-6 md:h-6" />
+            <ImageIcon className="text-blue-600 md:w-6 md:h-6" size={20} />
           </div>
           <div>
             <h3 className="text-lg md:text-xl font-bold text-gray-900 leading-tight">Cấu hình Hệ thống</h3>
@@ -167,7 +167,7 @@ export default function AdminSettings() {
                 <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center mb-3 md:mb-4 transition-all ${
                   isDragging ? 'bg-blue-500 text-white shadow-lg' : 'bg-white text-gray-400 shadow-sm group-hover:scale-110 group-hover:text-blue-500'
                 }`}>
-                  <Upload size={20} className="md:w-6 md:h-6" />
+                  <Upload className="md:w-6 md:h-6" size={20} />
                 </div>
                 
                 <div className="space-y-1">
@@ -177,7 +177,7 @@ export default function AdminSettings() {
 
                 {logoUrl && logoUrl.startsWith('data:') && (
                   <div className="absolute top-4 right-4 w-5 h-5 md:w-6 md:h-6 bg-green-500 text-white rounded-full flex items-center justify-center">
-                    <Check size={12} className="md:w-3.5 md:h-3.5" strokeWidth={3} />
+                    <Check className="md:w-3.5 md:h-3.5" size={12} strokeWidth={3} />
                   </div>
                 )}
               </div>
@@ -186,7 +186,7 @@ export default function AdminSettings() {
               <div className="bg-gray-50/50 border border-gray-100 rounded-3xl md:rounded-[2rem] p-6 md:p-8 flex flex-col justify-center space-y-3 md:space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-white rounded-lg md:rounded-xl shadow-sm border border-gray-100 flex items-center justify-center text-gray-400">
-                    <LinkIcon size={14} className="md:w-4 md:h-4" />
+                    <LinkIcon className="md:w-4 md:h-4" size={14} />
                   </div>
                   <span className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">Hoặc sử dụng Link ảnh</span>
                 </div>

@@ -69,7 +69,7 @@ export default function AdminManagement() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] shadow-sm border border-gray-100">
         <div>
           <h2 className="text-xl md:text-2xl font-black text-gray-900 flex items-center gap-3">
-            <ShieldCheck className="text-[#1A5FB4]" size={28} className="md:w-8 md:h-8" />
+            <ShieldCheck className="text-[#1A5FB4] md:w-8 md:h-8" size={28} />
             Bảo mật Cán bộ
           </h2>
           <p className="text-xs md:text-sm text-gray-500 mt-1">Quản lý quyền truy cập hệ thống.</p>
@@ -78,7 +78,7 @@ export default function AdminManagement() {
 
       {/* Info Card */}
       <div className="bg-blue-50 border border-blue-100 p-5 md:p-6 rounded-3xl flex gap-3 md:gap-4">
-        <Info className="text-blue-500 shrink-0" size={20} className="md:w-6 md:h-6" />
+        <Info className="text-blue-500 shrink-0 md:w-6 md:h-6" size={20} />
         <div className="text-[11px] md:text-sm text-blue-800 space-y-1.5 md:space-y-2">
           <p className="font-bold">Cách lấy UID để cấp quyền:</p>
           <div className="space-y-1">

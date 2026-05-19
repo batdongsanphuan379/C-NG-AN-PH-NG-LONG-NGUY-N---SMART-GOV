@@ -38,7 +38,7 @@ const StatCard = ({ label, value, icon: Icon, color, trend, isExporting }: any) 
   >
     <div className="flex justify-between items-start mb-3 md:mb-4">
       <div className={`p-2.5 md:p-3 rounded-xl md:rounded-2xl ${color} bg-opacity-10`}>
-        <Icon className={color.replace('bg-', 'text-')} size={20} className="md:w-6 md:h-6" />
+        <Icon className={`${color.replace('bg-', 'text-')} md:w-6 md:h-6`} size={20} />
       </div>
       {trend && (
         <span className={`flex items-center gap-1 text-xs font-bold ${trend > 0 ? 'text-green-500' : 'text-red-500'}`}>

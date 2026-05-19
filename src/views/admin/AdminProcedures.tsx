@@ -268,7 +268,7 @@ export default function AdminProcedures() {
             >
                <div className="flex justify-between items-start mb-3 md:mb-4">
                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-blue-50 flex items-center justify-center text-[#1A5FB4]">
-                     <FileText size={20} className="md:w-6 md:h-6" />
+                     <FileText className="md:w-6 md:h-6" size={20} />
                   </div>
                   <div className="flex gap-1">
                      <button 

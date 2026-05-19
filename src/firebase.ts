@@ -69,6 +69,18 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  
+  // Safe logging that handles circular structures
+  console.error('Firestore Error:', errInfo);
+  
+  // For the error message, we only use the stringified version if it's safe, 
+  // otherwise we fall back to a simple message to avoid crashing the whole app with "Circular structure" error
+  let safeMessage = 'An error occurred with Firestore.';
+  try {
+    safeMessage = JSON.stringify(errInfo);
+  } catch (e) {
+    safeMessage = `Firestore Error in ${operationType} on ${path}: ${errInfo.error}`;
+  }
+  
+  throw new Error(safeMessage);
 }
